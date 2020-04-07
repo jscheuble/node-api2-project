@@ -32,7 +32,6 @@ router.post("/", (req, res) => {
     });
 });
 
-// comment must contain text and post_id
 // insertComment takes a comment object, returns the comment id object
 router.post("/:id/comments", (req, res) => {
   const comment = req.body;
@@ -76,6 +75,54 @@ router.get("/", (req, res) => {
       res
         .status(500)
         .json({ error: "The posts information could not be retrieved" });
+    });
+});
+
+//returns the post object with the specified id
+// findById accepts an ID as a parameter and returns the corresponding post or []
+router.get("/:id", (req, res) => {
+  Posts.findById(req.params.id)
+    .then((post) => {
+      if (post.length > 0) {
+        res.status(200).json(post);
+      } else {
+        res.status(500).json({
+          errorMessage: "The post information could not be retrieved",
+        });
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(404).json({
+        errorMessage: "The post with the specified ID does not exist",
+      });
+    });
+});
+
+// should return an array of all comments associated w post id
+// findPostComments accepts postId and returns promise w array of all comments
+// findCommentById accepts id and returns promise w comment
+router.get("/:id/comments", (req, res) => {
+  Posts.findById(req.params.id)
+    .then((post) => {
+      if (post.length > 0) {
+        Posts.findPostComments(post[0].id).then((comments) => {
+          res.status(201).json(comments);
+        });
+      } else {
+        res
+          .status(404)
+          .json({
+            errorMessage: "The post with the specified ID does not exist",
+          });
+      }
+    })
+    .catch(() => {
+      res
+        .status(500)
+        .json({
+          errorMessage: "The comments information could not be retrieved",
+        });
     });
 });
 
