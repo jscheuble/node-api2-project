@@ -17,7 +17,7 @@ router.post("/", (req, res) => {
         .then((post) => {
           res.status(201).json(post);
         })
-        .catch((err) => {
+        .catch(() => {
           res
             .status(404)
             .json({ errorMessage: "There was an error retrieving your post" });
@@ -44,7 +44,7 @@ router.post("/:id/comments", (req, res) => {
   }
 
   Posts.findById(id)
-    .then((post) => {
+    .then(() => {
       Posts.insertComment(comment)
         .then((id) => {
           Posts.findCommentById(id.id).then((comment) => {
@@ -99,7 +99,6 @@ router.get("/:id", (req, res) => {
     });
 });
 
-// should return an array of all comments associated w post id
 // findPostComments accepts postId and returns promise w array of all comments
 // findCommentById accepts id and returns promise w comment
 router.get("/:id/comments", (req, res) => {
@@ -110,19 +109,65 @@ router.get("/:id/comments", (req, res) => {
           res.status(201).json(comments);
         });
       } else {
-        res
-          .status(404)
-          .json({
-            errorMessage: "The post with the specified ID does not exist",
-          });
+        res.status(404).json({
+          errorMessage: "The post with the specified ID does not exist",
+        });
       }
     })
     .catch(() => {
-      res
-        .status(500)
-        .json({
-          errorMessage: "The comments information could not be retrieved",
+      res.status(500).json({
+        errorMessage: "The comments information could not be retrieved",
+      });
+    });
+});
+
+// remove accepts id and returns promise w the number of records deleted
+router.delete("/:id", (req, res) => {
+  Posts.findById(req.params.id)
+    .then((post) => {
+      if (post.length > 0) {
+        Posts.remove(req.params.id).then((count) => {
+          res.status(201).json({
+            errorMessage: `${count} record(s) have been successfully deleted`,
+          });
         });
+      } else {
+        res.status(404).json({
+          errorMessage: "the post with the specified ID does not exist",
+        });
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({ errorMessage: "The post could not be removed" });
+    });
+});
+
+router.put("/:id", (req, res) => {
+  Posts.findById(req.params.id)
+    .then((post) => {
+      if (req.body.title && req.body.contents) {
+        Posts.update(post[0].id, req.body)
+          .then(() => {
+            Posts.findById(post[0].id).then((post) => {
+              res.status(200).json(post);
+            });
+          })
+          .catch(() => {
+            res.status(500).json({
+              errorMessage: "The post information could not be modified",
+            });
+          });
+      } else {
+        res.status(400).json({
+          errorMessage: "Please provide title and contents for the post",
+        });
+      }
+    })
+    .catch(() => {
+      res.status(404).json({
+        errorMessage: "The post with the specified ID does not exist",
+      });
     });
 });
 
