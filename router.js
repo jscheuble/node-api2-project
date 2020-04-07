@@ -32,6 +32,40 @@ router.post("/", (req, res) => {
     });
 });
 
+// comment must contain text and post_id
+// insertComment takes a comment object, returns the comment id object
+router.post("/:id/comments", (req, res) => {
+  const comment = req.body;
+  const id = req.params.id;
+
+  if (comment.text === "") {
+    res
+      .status(404)
+      .json({ errorMessage: "Please provide text for the comment" });
+  }
+
+  Posts.findById(id)
+    .then((post) => {
+      Posts.insertComment(comment)
+        .then((id) => {
+          Posts.findCommentById(id.id).then((comment) => {
+            res.status(201).json(comment);
+          });
+        })
+        .catch((err) => {
+          console.log(err);
+          res.status(500).json({
+            errorMessage: "The post with the specified ID does not exist",
+          });
+        });
+    })
+    .catch((err) => {
+      res.status(404).json({
+        error: "There was an error while saving the comment to the database",
+      });
+    });
+});
+
 router.get("/", (req, res) => {
   Posts.find()
     .then((posts) => {
